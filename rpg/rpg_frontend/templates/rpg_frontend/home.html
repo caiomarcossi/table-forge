@@ -1,0 +1,9 @@
+{% extends "rpg_frontend/base.html" %}
+
+{% block title %}Início{% endblock %}
+{% block meta_description %}Conta autenticada no Table Forge{% endblock %}
+
+{% block content %}
+<h1>Conta ativa</h1>
+<p>Você está conectado como {{ request.user.username }}.</p>
+{% endblock %}

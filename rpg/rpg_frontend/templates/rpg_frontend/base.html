@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="{% block meta_description %}Acesso ao Table Forge{% endblock %}">
+<link rel="stylesheet" href="{% static 'rpg_frontend/css/style.css' %}">
+<title>Table Forge - {% block title %}Acesso{% endblock %}</title>
+</head>
+<body>
+<main class="page-shell">
+	<section class="card auth-card">
+		<div class="brand">Table Forge</div>
+		{% block content %}{% endblock %}
+	</section>
+</main>
+</body>
+</html>

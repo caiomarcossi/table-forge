@@ -1,0 +1,54 @@
+{% extends "rpg_frontend/base.html" %}
+
+{% block title %}Entrar{% endblock %}
+{% block meta_description %}Página de login do Table Forge{% endblock %}
+{% block content %}
+<h1>
+Entrar no Table Forge
+</h1>
+<form method="post">
+{% csrf_token %}
+<p>
+<label for="id_username">Nome de usuário</label>
+<input
+type="text"
+id="id_username"
+name="username"
+autocomplete="username"
+required>
+</p>
+<p>
+<label for="id_password">Senha</label>
+<input
+type="password"
+id="id_password"
+name="password"
+autocomplete="current-password"
+required>
+</p>
+<p>
+<button type="submit">
+Entrar
+</button>
+</p>
+</form>
+
+<nav aria-label="cadastro">
+<p>
+<h1>
+Novo por aqui?
+</h1>
+<a href="{% url 'signup_pt' %}">
+Crie sua conta
+</a>
+</p>
+</nav>
+
+<nav aria-label="idioma">
+<p>
+<a href="{% url 'login_en' %}">
+English
+</a>
+</p>
+</nav>
+{% endblock %}

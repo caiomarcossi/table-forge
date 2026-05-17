@@ -7,6 +7,17 @@
 <h1>
 Login to Table Forge
 </h1>
+{% for error in form.non_field_errors %}
+{% if error == "invalid_login" %}
+<p role="alert">
+Invalid username or password.
+</p>
+{% else %}
+<p role="alert">
+{{ error }}
+</p>
+{% endif %}
+{% endfor %}
 <form method="post">
 {% csrf_token %}
 <p>

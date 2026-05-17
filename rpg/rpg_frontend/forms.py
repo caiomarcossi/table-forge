@@ -1,10 +1,11 @@
+import re
 from django import forms
 from django.contrib.auth.models import User
-import re
+from django.contrib.auth import authenticate
 
 class SignupForm(forms.Form):
-	email=forms.EmailField()
 	username=forms.CharField(max_length=150)
+	email=forms.EmailField()
 	password=forms.CharField(widget=forms.PasswordInput)
 	password_confirm=forms.CharField(widget=forms.PasswordInput)
 
@@ -49,3 +50,24 @@ class SignupForm(forms.Form):
 		user.profile.save()
 		return user
 
+class LoginForm(forms.Form):
+	username=forms.CharField(max_length=150)
+	password=forms.CharField(widget=forms.PasswordInput)
+
+	def __init__(self, *args, request=None, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.request=request
+		self.user=None
+
+	def clean(self):
+		cleaned_data=super().clean()
+		username=cleaned_data.get("username")
+		password=cleaned_data.get("password")
+		if username and password:
+			self.user=authenticate(self.request, username=username, password=password)
+			if self.user is None:
+				raise forms.ValidationError("invalid_login")
+		return cleaned_data
+
+	def get_user(self):
+		return self.user

@@ -10,4 +10,5 @@ urlpatterns = [
 	path("en/login/", views.login_en, name="login_en"),
 	path("en/signup/", views.signup_en, name="signup_en"),
 	path("logout/", views.logout_user, name="logout"),
+	path("table/<int:table_id>/", views.table_page, name="table_page"),
 ]

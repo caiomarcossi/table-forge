@@ -29,6 +29,7 @@ type="text"
 id="id_username"
 name="username"
 autocomplete="username"
+value="{{ form.username.value|default_if_none:'' }}"
 required>
 </p>
 <p>
@@ -49,16 +50,16 @@ Sign in
 </p>
 </form>
 
-<nav aria-label="Sign up">
-<p>
-<h1>
+<section aria-labelledby="signupTitle">
+<h2 id="signupTitle">
 New here?
-</h1>
+</h2>
+<p>
 <a href="{% url 'signup_en' %}">
 Create your account
 </a>
 </p>
-</nav>
+</section>
 
 <nav aria-label="language">
 <p>

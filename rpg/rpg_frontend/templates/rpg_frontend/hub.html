@@ -1,0 +1,44 @@
+{% extends "rpg_frontend/base.html" %}
+{% load static %}
+
+{% block html_lang %}{{ language }}{% endblock %}
+
+{% block full_title %}
+<title>{{ page_title }}</title>
+{% endblock %}
+
+{% block meta_description %}
+Table Forge
+{% endblock %}
+
+{% block content %}
+{% if hub_payload %}{{ hub_payload|json_script:"hubPayload" }}{% endif %}
+<div id="app">
+<section id="historyArea" aria-labelledby="historyTitle">
+<h2 id="historyTitle">Histórico</h2>
+<label class="sr-only" for="history">Histórico</label>
+<textarea id="history" rows="12" cols="80" wrap="soft" spellcheck="false" aria-readonly="true" autocomplete="off"></textarea>
+<div id="historyAnnouncements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+</section>
+
+<section id="gameArea" aria-labelledby="gameTitle">
+<h2 id="gameTitle">Jogo</h2>
+<p id="connectionStatus" role="status" aria-live="polite"></p>
+</section>
+
+<section id="actionsArea" aria-labelledby="actionsTitle">
+<h2 id="actionsTitle">Ações</h2>
+<div id="actionsMenu" role="toolbar" aria-labelledby="actionsTitle" aria-orientation="horizontal"></div>
+</section>
+
+<form id="chatArea">
+<label for="chatBox">Chat</label>
+<input type="text" id="chatBox" autocomplete="off">
+<button type="submit">Enviar</button>
+</form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'rpg_frontend/js/hub.js' %}"></script>
+{% endblock %}

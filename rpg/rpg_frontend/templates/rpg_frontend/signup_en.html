@@ -13,7 +13,7 @@ Create your Table Forge account
 <label for="id_username">
 Username
 </label>
-<input type="text" id="id_username" name="username" autocomplete="username" required>
+<input type="text" id="id_username" name="username" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}" required>
 </p>
 {% for error in form.username.errors %}
 {% if error == "username_already_exists" %}
@@ -30,7 +30,7 @@ This username is already in use.
 <label for="id_email">
 Email address
 </label>
-<input type="email" id="id_email" name="email" autocomplete="email" required>
+<input type="email" id="id_email" name="email" autocomplete="email" value="{{ form.email.value|default_if_none:'' }}" required>
 </p>
 {% for error in form.email.errors %}
 {% if error == "email_already_exists" %}
@@ -100,11 +100,11 @@ Create account
 </p>
 </form>
 
-<p>
 <h2>
 Already have an account?
 </h2>
-<a href="{% url 'login_pt' %}">
+<p>
+<a href="{% url 'login_en' %}">
 Log in
 </a>
 </p>

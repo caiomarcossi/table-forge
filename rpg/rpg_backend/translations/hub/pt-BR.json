@@ -1,0 +1,22 @@
+{
+	"hub_connected": "Hub conectado.",
+	"table_create": "Criar mesa",
+	"table_join": "Entrar em mesa",
+	"hub_exit": "Sair",
+	"table_created": "Mesa criada.",
+	"table_joined": "Você entrou na mesa de {owner}.",
+	"table_list_empty": "Nenhuma mesa pública disponível.",
+	"table_list_label": "Mesa de {owner}",
+	"table_list_label_invited": "Mesa de {owner} (convite)",
+	"table_list_cancel": "Cancelar",
+	"table_not_found": "Mesa não encontrada.",
+	"hub_chat_only_private": "Chat público disponível apenas dentro de uma mesa. Use @<usuário> <mensagem> para mensagem privada.",
+	"private_message_sent": "→ {username}: {message}",
+	"private_message_from": "← {username}: {message}",
+	"private_message_user_not_found": "Usuário não encontrado.",
+	"private_message_format": "Use: @<usuário> <mensagem>",
+	"private_no_target": "Você ainda não enviou mensagem privada para ninguém. Use @<usuário> <mensagem>.",
+	"private_no_sender": "Ninguém te enviou mensagem privada ainda. Use @<usuário> <mensagem>.",
+	"client_invalid_message": "Mensagem inválida recebida pelo cliente.",
+	"connection_closed": "Conexão em tempo real encerrada."
+}

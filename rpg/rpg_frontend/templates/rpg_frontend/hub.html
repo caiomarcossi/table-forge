@@ -12,7 +12,7 @@ Table Forge
 {% endblock %}
 
 {% block content %}
-{% if hub_payload %}{{ hub_payload|json_script:"hubPayload" }}{% endif %}
+{{ initial_table_token|json_script:"initialTable" }}
 <div id="app">
 <section id="historyArea" aria-labelledby="historyTitle">
 <h2 id="historyTitle">Histórico</h2>

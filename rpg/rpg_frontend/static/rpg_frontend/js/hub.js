@@ -1,4 +1,9 @@
 const audioContext=typeof AudioContext!=="undefined"?new AudioContext():null;
+const masterGain=audioContext?audioContext.createGain():null;
+if(masterGain){
+masterGain.gain.value=0.4;
+masterGain.connect(audioContext.destination);
+}
 const soundCache={};
 let pendingSound=null;
 
@@ -24,7 +29,7 @@ return;
 if(soundCache[soundId]){
 const source=audioContext.createBufferSource();
 source.buffer=soundCache[soundId];
-source.connect(audioContext.destination);
+source.connect(masterGain);
 source.start(0);
 return;
 }
@@ -39,7 +44,7 @@ audioContext.decodeAudioData(buffer,function(decoded){
 soundCache[soundId]=decoded;
 const source=audioContext.createBufferSource();
 source.buffer=decoded;
-source.connect(audioContext.destination);
+source.connect(masterGain);
 source.start(0);
 });
 })
@@ -108,6 +113,8 @@ button.addEventListener("click",function(){ handleAction(action); });
 button.addEventListener("keydown",handleActionKeydown);
 actionsMenu.appendChild(button);
 });
+const buttons=getActionButtons();
+if(buttons.length) buttons[0].focus();
 }
 
 function getActionButtons(){
@@ -157,7 +164,7 @@ return;
 }
 if(action.type==="table.join.select"){
 if(activeSocket && activeSocket.readyState===WebSocket.OPEN){
-activeSocket.send(JSON.stringify({type:"table.join",table_id:action.table_id}));
+activeSocket.send(JSON.stringify({type:"table.join",table_token:action.table_token}));
 }
 return;
 }
@@ -209,7 +216,7 @@ addHistory(data.empty_message||"");
 return;
 }
 const listActions=data.tables.map(function(t){
-return {type:"table.join.select",table_id:t.id,label:t.label};
+return {type:"table.join.select",table_token:t.token,label:t.label};
 });
 listActions.push({type:"hub.main",label:data.cancel_label});
 renderActions(listActions);
@@ -217,7 +224,7 @@ return;
 }
 if(data.type==="table.created"||data.type==="table.joined"){
 addHistory(data.message);
-connectTable(data.table_id);
+connectTable(data.table_token);
 return;
 }
 if(data.type==="player.connected"||data.type==="player.disconnected"){
@@ -246,12 +253,16 @@ const protocol=window.location.protocol==="https:"?"wss":"ws";
 return new WebSocket(protocol+"://"+window.location.host+url);
 }
 
-function connectHub(){
-if(activeSocket){
-activeSocket.onclose=null;
-activeSocket.close();
+function closeActiveSocket(callback){
+if(!activeSocket){ callback(); return; }
+const old=activeSocket;
 activeSocket=null;
+old.addEventListener("close",function(){ callback(); },{once:true});
+old.close();
 }
+
+function connectHub(){
+closeActiveSocket(function(){
 inputMode=null;
 activeMode="hub";
 const socket=buildSocket("/ws/rpg/hub/");
@@ -261,18 +272,14 @@ socket.addEventListener("close",function(){
 if(activeSocket!==socket) return;
 addHistory(activeMessages.connection_closed||"");
 });
-history.pushState(null,"","/rpg/");
+});
 }
 
-function connectTable(tableId){
-if(activeSocket){
-activeSocket.onclose=null;
-activeSocket.close();
-activeSocket=null;
-}
+function connectTable(tableToken){
+closeActiveSocket(function(){
 inputMode=null;
 activeMode="table";
-const socket=buildSocket("/ws/rpg/table/"+tableId+"/");
+const socket=buildSocket("/ws/rpg/table/"+tableToken+"/");
 activeSocket=socket;
 socket.addEventListener("message",handleMessage);
 socket.addEventListener("close",function(){
@@ -280,7 +287,7 @@ if(activeSocket!==socket) return;
 addHistory(activeMessages.connection_closed||"");
 connectHub();
 });
-history.pushState(null,"","/rpg/table/"+tableId+"/");
+});
 }
 
 historyElement.addEventListener("beforeinput",function(e){ e.preventDefault(); });
@@ -312,14 +319,11 @@ activeSocket.send(JSON.stringify({type:type,message:message}));
 });
 
 (function init(){
-const pathMatch=window.location.pathname.match(/^\/rpg\/table\/(\d+)\//);
-if(pathMatch){
-connectTable(parseInt(pathMatch[1]));
+const initialTableElement=document.getElementById("initialTable");
+const initialTableToken=initialTableElement?JSON.parse(initialTableElement.textContent):null;
+if(initialTableToken){
+connectTable(initialTableToken);
 }else{
-const hubPayloadElement=document.getElementById("hubPayload");
 connectHub();
-if(hubPayloadElement){
-handleHubPayload(JSON.parse(hubPayloadElement.textContent));
-}
 }
 })();

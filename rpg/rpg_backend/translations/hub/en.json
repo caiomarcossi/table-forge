@@ -1,0 +1,22 @@
+{
+	"hub_connected": "Hub connected.",
+	"table_create": "Create table",
+	"table_join": "Join table",
+	"hub_exit": "Exit",
+	"table_created": "Table created.",
+	"table_joined": "You joined {owner}'s table.",
+	"table_list_empty": "No public tables available.",
+	"table_list_label": "{owner}'s table",
+	"table_list_label_invited": "{owner}'s table (invite)",
+	"table_list_cancel": "Cancel",
+	"table_not_found": "Table not found.",
+	"hub_chat_only_private": "Public chat only available inside a table. Use @<user> <message> for private message.",
+	"private_message_sent": "→ {username}: {message}",
+	"private_message_from": "← {username}: {message}",
+	"private_message_user_not_found": "User not found.",
+	"private_message_format": "Use: @<user> <message>",
+	"private_no_target": "You haven't sent a private message to anyone yet. Use @<user> <message>.",
+	"private_no_sender": "Nobody has sent you a private message yet. Use @<user> <message>.",
+	"client_invalid_message": "Invalid message received by the client.",
+	"connection_closed": "Real-time connection closed."
+}

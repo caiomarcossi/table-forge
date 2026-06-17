@@ -1,7 +1,5 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth import login, logout
-from django.urls import reverse
-from rpg_backend.hub import get_hub_payload
 from rpg_backend.models import Table
 from .forms import SignupForm, LoginForm
 
@@ -41,10 +39,14 @@ def rpg_home(request):
 	language="pt-BR"
 	if hasattr(request.user, "profile"):
 		language=request.user.profile.default_language
+	initial_table_token=request.session.get("current_table_token")
+	if initial_table_token and not Table.objects.filter(token=initial_table_token, members=request.user).exists():
+		del request.session["current_table_token"]
+		initial_table_token=None
 	return render(request, "rpg_frontend/hub.html", {
 		"language": language,
 		"page_title": "Table Forge",
-		"hub_payload": get_hub_payload(request.user, reverse("logout")),
+		"initial_table_token": initial_table_token,
 	})
 
 def signup_user(request, language):
@@ -60,21 +62,6 @@ def signup_user(request, language):
 		return render(request, template_name, {"form": form})
 	form=SignupForm()
 	return render(request, template_name, {"form": form})
-
-def table_page(request, table_id):
-	if not request.user.is_authenticated:
-		return redirect("login_auto")
-	try:
-		table=Table.objects.select_related("owner").get(id=table_id, members=request.user)
-	except Table.DoesNotExist:
-		return redirect("rpg_home")
-	language="pt-BR"
-	if hasattr(request.user, "profile"):
-		language=request.user.profile.default_language
-	return render(request, "rpg_frontend/hub.html", {
-		"language": language,
-		"page_title": f"mesa de {table.owner.username}",
-	})
 
 def logout_user(request):
 	logout(request)

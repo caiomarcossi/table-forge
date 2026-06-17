@@ -1,3 +1,4 @@
+import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
@@ -32,6 +33,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 		UserProfile.objects.create(user=instance)
 
 class Table(models.Model):
+	token=models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	owner=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_tables")
 	members=models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="tables", blank=True)
 	is_private=models.BooleanField(default=False)

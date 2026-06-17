@@ -22,14 +22,13 @@ from .sounds import (
 	SOUND_COIN_FLIP,
 )
 
-User=get_user_model()
-
 @database_sync_to_async
 def get_consumer_language(user):
 	return get_hub_language(user)
 
 @database_sync_to_async
 def get_user_by_username(username):
+	User=get_user_model()
 	try:
 		return User.objects.get(username=username)
 	except User.DoesNotExist:
@@ -68,12 +67,11 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		friend_ids=await self.db_get_friend_ids()
 		for friend_id in friend_ids:
 			await self.channel_layer.group_send(f"user_{friend_id}", {
-				"type": "forward_json",
-				"data": {
-					"type": "player.connected",
-					"username": self.user.username,
-					"sound": SOUND_PLAYER_CONNECTED,
-				},
+				"type": "receive.translated.message",
+				"namespace": "hub",
+				"key": "player_connected",
+				"params": {"username": self.user.username},
+				"sound": SOUND_PLAYER_CONNECTED,
 			})
 
 	async def leave_global_presence(self):
@@ -81,16 +79,24 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		friend_ids=await self.db_get_friend_ids()
 		for friend_id in friend_ids:
 			await self.channel_layer.group_send(f"user_{friend_id}", {
-				"type": "forward_json",
-				"data": {
-					"type": "player.disconnected",
-					"username": self.user.username,
-					"sound": SOUND_PLAYER_DISCONNECTED,
-				},
+				"type": "receive.translated.message",
+				"namespace": "hub",
+				"key": "player_disconnected",
+				"params": {"username": self.user.username},
+				"sound": SOUND_PLAYER_DISCONNECTED,
 			})
 
 	async def forward_json(self, event):
 		await self.send_json(event["data"])
+
+	async def receive_translated_message(self, event):
+		from .i18n import load_translations
+		texts=load_translations(event["namespace"], self.language)
+		message=texts[event["key"]].format(**event.get("params", {}))
+		payload={"type": "hub.history", "message": message}
+		if "sound" in event:
+			payload["sound"]=event["sound"]
+		await self.send_json(payload)
 
 	@database_sync_to_async
 	def set_session_table_token(self, token):
@@ -140,6 +146,7 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		await self.send_json({
 			"type": "hub.history",
 			"message": texts["private_message_sent"].format(username=target, message=content),
+			"sound": SOUND_PRIVATE_MESSAGE,
 		})
 
 	async def receive_private_message(self, event):
@@ -214,9 +221,11 @@ class HubConsumer(BaseJsonConsumer):
 			public, invited=await self.db_list_tables()
 			tables=[]
 			for t in public:
-				tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label"].format(owner=t.owner.username), "invited": False})
+				if not await game.is_in_progress(str(t.token)):
+					tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label"].format(owner=t.owner.username), "invited": False})
 			for t in invited:
-				tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label_invited"].format(owner=t.owner.username), "invited": True})
+				if not await game.is_in_progress(str(t.token)):
+					tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label_invited"].format(owner=t.owner.username), "invited": True})
 			await self.send_json({
 				"type": "hub.table_list",
 				"tables": tables,
@@ -265,17 +274,23 @@ class HubConsumer(BaseJsonConsumer):
 			friends=await self.db_get_friends()
 			if not friends:
 				await self.send_json({"type": "hub.history", "message": stexts["no_friends"]})
+				await self.send_json({"type": "hub.menu", "actions": [{"type": "friends.open", "label": stexts["friends_back_to_friends"]}]})
 			else:
+				actions=[]
 				for friend_id,username in friends:
 					p=await presence.get_user_presence(friend_id)
 					if p is None:
-						line=stexts["friend_offline"].format(username=username)
+						label=stexts["friend_offline"].format(username=username)
 					elif p["location"]=="hub":
-						line=stexts["friend_online_hub"].format(username=username)
+						label=stexts["friend_online_hub"].format(username=username)
 					else:
-						line=stexts["friend_online_table"].format(username=username,owner=p.get("table_owner") or "")
-					await self.send_json({"type": "hub.history", "message": line})
-			await self.send_json({"type": "hub.menu", "actions": [{"type": "friends.open", "label": stexts["friends_back_to_friends"]}]})
+						label=stexts["friend_online_table"].format(username=username,owner=p.get("table_owner") or "")
+					actions.append({"type": "friends.noop", "label": label})
+				actions.append({"type": "friends.open", "label": stexts["friends_back_to_friends"]})
+				await self.send_json({"type": "hub.menu", "actions": actions})
+			return
+
+		if event=="friends.noop":
 			return
 
 		if event=="friends.add.open":
@@ -318,8 +333,10 @@ class HubConsumer(BaseJsonConsumer):
 			else:
 				await self.send_json({"type": "hub.history", "message": stexts["friend_request_sent"].format(username=target.username)})
 				await self.channel_layer.group_send(f"user_{target.id}", {
-					"type": "forward_json",
-					"data": {"type": "hub.history", "message": stexts["friend_request_received_notification"].format(username=self.user.username)},
+					"type": "receive.translated.message",
+					"namespace": "social",
+					"key": "friend_request_received_notification",
+					"params": {"username": self.user.username},
 				})
 			await self.send_friends_menu()
 			return
@@ -375,8 +392,10 @@ class HubConsumer(BaseJsonConsumer):
 			else:
 				await self.send_json({"type": "hub.history", "message": stexts["friend_request_accepted"].format(username=sender.username)})
 				await self.channel_layer.group_send(f"user_{sender.id}", {
-					"type": "forward_json",
-					"data": {"type": "hub.history", "message": stexts["friend_request_accepted_notification"].format(username=self.user.username)},
+					"type": "receive.translated.message",
+					"namespace": "social",
+					"key": "friend_request_accepted_notification",
+					"params": {"username": self.user.username},
 				})
 			await self.send_friends_menu()
 			return
@@ -446,6 +465,7 @@ class HubConsumer(BaseJsonConsumer):
 	@database_sync_to_async
 	def db_send_friend_request(self, user_id):
 		from .models import Friendship, FriendRequest
+		User=get_user_model()
 		try:
 			target=User.objects.get(id=user_id)
 		except User.DoesNotExist:
@@ -465,6 +485,7 @@ class HubConsumer(BaseJsonConsumer):
 	@database_sync_to_async
 	def db_remove_friend(self, user_id):
 		from .models import Friendship
+		User=get_user_model()
 		try:
 			target=User.objects.get(id=user_id)
 		except User.DoesNotExist:
@@ -1017,6 +1038,7 @@ class TableConsumer(BaseJsonConsumer):
 	@database_sync_to_async
 	def db_invite_user(self, username):
 		from .models import Table, TableInvite
+		User=get_user_model()
 		try:
 			recipient=User.objects.get(username=username)
 		except User.DoesNotExist:

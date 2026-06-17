@@ -17,7 +17,7 @@ def get_hub_actions_for_language(language, logout_url):
 	stexts=get_social_texts_for_language(language)
 	return [
 		{"type": "table.create", "label": texts["table_create"]},
-		{"type": "table.join", "label": texts["table_join"]},
+		{"type": "table.list", "label": texts["table_join"]},
 		{"type": "social.open", "label": stexts["social_label"]},
 		{"type": "hub.exit", "label": texts["hub_exit"], "logout_url": logout_url},
 	]

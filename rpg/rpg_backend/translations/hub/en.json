@@ -1,5 +1,12 @@
 {
 	"hub_connected": "Hub connected.",
+	"player_connected": "{username} connected.",
+	"player_disconnected": "{username} disconnected.",
+	"ui_history_title": "History",
+	"ui_game_title": "Game",
+	"ui_actions_title": "Actions",
+	"ui_chat_label": "Chat",
+	"ui_send_button": "Send",
 	"table_create": "Create table",
 	"table_join": "Join table",
 	"hub_exit": "Exit",

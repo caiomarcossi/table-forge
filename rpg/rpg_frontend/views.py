@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth import login, logout
 from rpg_backend.models import Table
+from rpg_backend.hub import get_hub_texts_for_language
 from .forms import SignupForm, LoginForm
 
 def browser_prefers_portuguese(request):
@@ -43,10 +44,16 @@ def rpg_home(request):
 	if initial_table_token and not Table.objects.filter(token=initial_table_token, members=request.user).exists():
 		del request.session["current_table_token"]
 		initial_table_token=None
+	ui=get_hub_texts_for_language(language)
 	return render(request, "rpg_frontend/hub.html", {
 		"language": language,
 		"page_title": "Table Forge",
 		"initial_table_token": initial_table_token,
+		"ui_history_title": ui["ui_history_title"],
+		"ui_game_title": ui["ui_game_title"],
+		"ui_actions_title": ui["ui_actions_title"],
+		"ui_chat_label": ui["ui_chat_label"],
+		"ui_send_button": ui["ui_send_button"],
 	})
 
 def signup_user(request, language):

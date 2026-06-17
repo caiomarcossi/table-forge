@@ -1,5 +1,12 @@
 {
 	"hub_connected": "Hub conectado.",
+	"player_connected": "{username} conectou-se.",
+	"player_disconnected": "{username} desconectou-se.",
+	"ui_history_title": "Histórico",
+	"ui_game_title": "Jogo",
+	"ui_actions_title": "Ações",
+	"ui_chat_label": "Chat",
+	"ui_send_button": "Enviar",
 	"table_create": "Criar mesa",
 	"table_join": "Entrar em mesa",
 	"hub_exit": "Sair",

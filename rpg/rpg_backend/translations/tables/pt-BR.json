@@ -7,6 +7,7 @@
 	"invite_received": "{owner} te convidou para uma mesa. Use 'Entrar em mesa' para aceitar.",
 	"invite_user_not_found": "Usuário não encontrado.",
 	"invite_format": "Use: /invite <usuário>",
+	"player_joined": "{username} entrou na mesa.",
 	"player_left": "{username} saiu da mesa.",
 	"chat_message": "{username}: {message}",
 	"private_message_sent": "→ {username}: {message}",

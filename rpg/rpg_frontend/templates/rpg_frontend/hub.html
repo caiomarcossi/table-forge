@@ -17,8 +17,8 @@ Table Forge
 <section id="historyArea" aria-labelledby="historyTitle">
 <h2 id="historyTitle">{{ ui_history_title }}</h2>
 <label class="sr-only" for="history">{{ ui_history_title }}</label>
-<textarea id="history" rows="12" cols="80" wrap="soft" spellcheck="false" aria-readonly="true" autocomplete="off"></textarea>
-<div id="historyAnnouncements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<textarea id="history" rows="12" wrap="soft" inputmode="none" spellcheck="false" autocomplete="off"></textarea>
+<div id="historyAnnouncements" class="sr-only" role="log" aria-live="polite" aria-label="{{ ui_history_title }}"></div>
 </section>
 
 <section id="gameArea" aria-labelledby="gameTitle">

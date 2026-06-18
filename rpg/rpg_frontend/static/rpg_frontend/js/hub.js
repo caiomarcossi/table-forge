@@ -83,13 +83,15 @@ historyElement.scrollTop=scrollTop;
 historyElement.selectionStart=historyElement.value.length;
 historyElement.selectionEnd=historyElement.value.length;
 }
-if(wasAtEnd && !isReadingHistory){
+if(wasAtEnd&&!isReadingHistory){
 historyElement.scrollTop=historyElement.scrollHeight;
 }
-historyAnnouncements.textContent="";
-window.setTimeout(function(){
-historyAnnouncements.textContent=message;
-},10);
+const p=document.createElement("p");
+p.textContent=message;
+historyAnnouncements.appendChild(p);
+while(historyAnnouncements.childElementCount>15){
+historyAnnouncements.removeChild(historyAnnouncements.firstChild);
+}
 }
 
 function restoreHistoryValue(){
@@ -158,10 +160,6 @@ activeSocket.send(JSON.stringify({type:"hub.exit"}));
 window.location.href=action.logout_url;
 return;
 }
-if(action.type==="table.leave"){
-connectHub();
-return;
-}
 if(action.type==="table.join.select"){
 if(activeSocket && activeSocket.readyState===WebSocket.OPEN){
 activeSocket.send(JSON.stringify({type:"table.join",table_token:action.table_token}));
@@ -182,6 +180,11 @@ catch(e){ addHistory(activeMessages.client_invalid_message||""); return; }
 if(data.sound) playSound(data.sound);
 if(data.type==="hub.history"||data.type==="message.private"){
 addHistory(data.message);
+return;
+}
+if(data.type==="hub.menu"){
+if(data.message) addHistory(data.message);
+renderActions(data.actions||[]);
 return;
 }
 if(data.type==="hub.input"){

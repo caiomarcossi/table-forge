@@ -7,6 +7,7 @@
 	"invite_received": "{owner} invited you to a table. Use 'Join table' to accept.",
 	"invite_user_not_found": "User not found.",
 	"invite_format": "Use: /invite <user>",
+	"player_joined": "{username} joined the table.",
 	"player_left": "{username} left the table.",
 	"chat_message": "{username}: {message}",
 	"private_message_sent": "→ {username}: {message}",

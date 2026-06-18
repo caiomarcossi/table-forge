@@ -7,12 +7,12 @@ def _ck(token,user_id): return f"game:challenge:{token}:{user_id}"
 
 async def player_joined(token,user_id,username):
 	players=await cache.aget(_pk(token)) or {}
-	players[user_id]=username
+	players[str(user_id)]=username
 	await cache.aset(_pk(token),players)
 
 async def player_left(token,user_id):
 	players=await cache.aget(_pk(token)) or {}
-	players.pop(user_id,None)
+	players.pop(str(user_id),None)
 	if players:
 		await cache.aset(_pk(token),players)
 	else:
@@ -20,7 +20,8 @@ async def player_left(token,user_id):
 	await cache.adelete(_ck(token,user_id))
 
 async def get_players(token):
-	return await cache.aget(_pk(token)) or {}
+	players=await cache.aget(_pk(token)) or {}
+	return {int(k):v for k,v in players.items()}
 
 async def get_player_count(token):
 	players=await cache.aget(_pk(token)) or {}
@@ -38,7 +39,7 @@ async def get_master_username(token):
 	return state["master_username"] if state else None
 
 async def start_game(token,master_id,master_username):
-	await cache.aset(_sk(token),{"master_id":master_id,"master_username":master_username})
+	await cache.aset(_sk(token),{"master_id":int(master_id),"master_username":master_username})
 
 async def stop_game(token):
 	await cache.adelete(_sk(token))
@@ -49,7 +50,7 @@ async def stop_game(token):
 async def set_master(token,master_id,master_username):
 	state=await cache.aget(_sk(token))
 	if state:
-		state["master_id"]=master_id
+		state["master_id"]=int(master_id)
 		state["master_username"]=master_username
 		await cache.aset(_sk(token),state)
 

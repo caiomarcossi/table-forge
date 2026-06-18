@@ -1,7 +1,9 @@
+import asyncio
 import json
 import uuid
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
+from django.core.cache import cache as django_cache
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -34,6 +36,11 @@ def get_user_by_username(username):
 	except User.DoesNotExist:
 		return None
 
+@database_sync_to_async
+def delete_table_by_token(token):
+	from .models import Table
+	Table.objects.filter(token=token).delete()
+
 def parse_command(message, prefix):
 	if not message.startswith(prefix+" "):
 		return None
@@ -63,28 +70,46 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		await self.channel_layer.group_discard(self.personal_group, self.channel_name)
 
 	async def join_global_presence(self, location, table_owner=None):
+		leaving_key=f"user_leaving:{self.user.id}"
+		was_switching=await django_cache.aget(leaving_key)
+		if was_switching:
+			await django_cache.adelete(leaving_key)
 		await presence.user_connected(self.user.id, self.user.username, location, table_owner)
-		friend_ids=await self.db_get_friend_ids()
-		for friend_id in friend_ids:
-			await self.channel_layer.group_send(f"user_{friend_id}", {
-				"type": "receive.translated.message",
-				"namespace": "hub",
-				"key": "player_connected",
-				"params": {"username": self.user.username},
-				"sound": SOUND_PLAYER_CONNECTED,
-			})
+		if not was_switching:
+			friend_ids=await self.db_get_friend_ids()
+			for friend_id in friend_ids:
+				await self.channel_layer.group_send(f"user_{friend_id}", {
+					"type": "receive.translated.message",
+					"namespace": "hub",
+					"key": "player_connected",
+					"params": {"username": self.user.username},
+					"sound": SOUND_PLAYER_CONNECTED,
+				})
 
 	async def leave_global_presence(self):
-		await presence.user_disconnected(self.user.id)
+		user_id=self.user.id
+		username=self.user.username
 		friend_ids=await self.db_get_friend_ids()
-		for friend_id in friend_ids:
-			await self.channel_layer.group_send(f"user_{friend_id}", {
-				"type": "receive.translated.message",
-				"namespace": "hub",
-				"key": "player_disconnected",
-				"params": {"username": self.user.username},
-				"sound": SOUND_PLAYER_DISCONNECTED,
-			})
+		channel_layer=self.channel_layer
+		leaving_key=f"user_leaving:{user_id}"
+		await django_cache.aset(leaving_key, True, timeout=3)
+		await presence.user_disconnected(user_id)
+
+		async def delayed_disconnect():
+			await asyncio.sleep(3)
+			still_leaving=await django_cache.aget(leaving_key)
+			if still_leaving:
+				await django_cache.adelete(leaving_key)
+				for friend_id in friend_ids:
+					await channel_layer.group_send(f"user_{friend_id}", {
+						"type": "receive.translated.message",
+						"namespace": "hub",
+						"key": "player_disconnected",
+						"params": {"username": username},
+						"sound": SOUND_PLAYER_DISCONNECTED,
+					})
+
+		asyncio.ensure_future(delayed_disconnect())
 
 	async def forward_json(self, event):
 		await self.send_json(event["data"])
@@ -221,11 +246,19 @@ class HubConsumer(BaseJsonConsumer):
 			public, invited=await self.db_list_tables()
 			tables=[]
 			for t in public:
-				if not await game.is_in_progress(str(t.token)):
-					tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label"].format(owner=t.owner.username), "invited": False})
+				token=str(t.token)
+				if await game.get_player_count(token)==0:
+					await delete_table_by_token(token)
+					continue
+				if not await game.is_in_progress(token):
+					tables.append({"token": token, "owner": t.owner.username, "label": texts["table_list_label"].format(owner=t.owner.username), "invited": False})
 			for t in invited:
-				if not await game.is_in_progress(str(t.token)):
-					tables.append({"token": str(t.token), "owner": t.owner.username, "label": texts["table_list_label_invited"].format(owner=t.owner.username), "invited": True})
+				token=str(t.token)
+				if await game.get_player_count(token)==0:
+					await delete_table_by_token(token)
+					continue
+				if not await game.is_in_progress(token):
+					tables.append({"token": token, "owner": t.owner.username, "label": texts["table_list_label_invited"].format(owner=t.owner.username), "invited": True})
 			await self.send_json({
 				"type": "hub.table_list",
 				"tables": tables,
@@ -545,6 +578,15 @@ class TableConsumer(BaseJsonConsumer):
 		self.is_private=table.is_private
 		self.language=await get_consumer_language(self.user)
 		self.table_group=f"table_{self.table_token}"
+		texts=get_table_texts_for_language(self.language)
+		await self.channel_layer.group_send(self.table_group, {
+			"type": "forward_json",
+			"data": {
+				"type": "hub.history",
+				"message": texts["player_joined"].format(username=self.user.username),
+				"sound": SOUND_TABLE_JOINED,
+			},
+		})
 		await self.channel_layer.group_add(self.table_group, self.channel_name)
 		await self.join_personal_group()
 		await self.join_global_presence("table", table_owner=self.owner_username)
@@ -569,6 +611,8 @@ class TableConsumer(BaseJsonConsumer):
 				})
 				await self.channel_layer.group_send(self.table_group,{"type":"refresh_actions"})
 			await game.player_left(self.table_token,self.user.id)
+			if await game.get_player_count(self.table_token)==0:
+				await delete_table_by_token(self.table_token)
 			await self.channel_layer.group_send(self.table_group, {
 				"type": "forward_json",
 				"data": {

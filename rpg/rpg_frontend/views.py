@@ -22,6 +22,32 @@ def signup_auto_language(request):
 		return redirect("signup_pt")
 	return redirect("signup_en")
 
+def landing_auto_language(request):
+	if request.user.is_authenticated:
+		language="pt-BR"
+		if hasattr(request.user, "profile"):
+			language=request.user.profile.default_language
+		if language=="en":
+			return redirect("landing_en")
+		return redirect("landing_pt")
+	if browser_prefers_portuguese(request):
+		return redirect("landing_pt")
+	return redirect("landing_en")
+
+def landing_pt(request):
+	return landing_page(request, "pt")
+
+def landing_en(request):
+	return landing_page(request, "en")
+
+def landing_page(request, language):
+	template_name="rpg_frontend/landing_pt.html"
+	if language=="en":
+		template_name="rpg_frontend/landing_en.html"
+	return render(request, template_name, {
+		"authenticated": request.user.is_authenticated,
+	})
+
 def login_pt(request):
 	return login_user(request, "pt")
 
@@ -65,26 +91,26 @@ def signup_user(request, language):
 		if form.is_valid():
 			user=form.save(language=language)
 			login(request, user)
-			return redirect("rpg_home")
+			return redirect("landing_auto")
 		return render(request, template_name, {"form": form})
 	form=SignupForm()
 	return render(request, template_name, {"form": form})
 
 def logout_user(request):
 	logout(request)
-	return redirect("rpg_home")
+	return redirect("login_auto")
 
 def login_user(request, language):
 	template_name="rpg_frontend/login_pt.html"
 	if language=="en":
 		template_name="rpg_frontend/login_en.html"
 	if request.user.is_authenticated:
-		return redirect("rpg_home")
+		return redirect("landing_auto")
 	if request.method=="POST":
 		form=LoginForm(request.POST, request=request)
 		if form.is_valid():
 			login(request, form.get_user())
-			return redirect("rpg_home")
+			return redirect("landing_auto")
 		return render(request, template_name, {"form": form})
 	form=LoginForm()
 	return render(request, template_name, {"form": form})

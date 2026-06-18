@@ -1,0 +1,39 @@
+{% extends "rpg_frontend/base.html" %}
+
+{% block html_lang %}en-US{% endblock %}
+{% block title %}Welcome{% endblock %}
+{% block meta_description %}Online tabletop RPG platform{% endblock %}
+
+{% block content %}
+<h1>
+Table Forge
+</h1>
+<p>
+Table Forge is an online tabletop RPG platform.
+Create tables, invite friends, and experience your adventures in real time.
+</p>
+
+{% if authenticated %}
+<p>
+<a href="{% url 'rpg_home' %}">Play</a>
+</p>
+{% else %}
+<section aria-labelledby="accessTitle">
+<h2 id="accessTitle">
+Access your account
+</h2>
+<p>
+<a href="{% url 'login_en' %}">Sign in</a>
+</p>
+<p>
+<a href="{% url 'signup_en' %}">Create account</a>
+</p>
+</section>
+{% endif %}
+
+<nav aria-label="language">
+<p>
+<a href="{% url 'landing_pt' %}">Português</a>
+</p>
+</nav>
+{% endblock %}

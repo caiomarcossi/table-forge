@@ -9,6 +9,7 @@
 	"ui_send_button": "Enviar",
 	"table_create": "Criar mesa",
 	"table_join": "Entrar em mesa",
+	"hub_disconnect": "Desconectar",
 	"hub_exit": "Sair",
 	"table_created": "Mesa criada.",
 	"table_joined": "Você entrou na mesa de {owner}.",

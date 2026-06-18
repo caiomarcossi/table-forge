@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
-	path("", RedirectView.as_view(pattern_name="rpg_home")),
+	path("", RedirectView.as_view(pattern_name="landing_auto")),
 	path("game/", views.rpg_home, name="rpg_home"),
 	path("login/", views.login_auto_language, name="login_auto"),
 	path("signup/", views.signup_auto_language, name="signup_auto"),
@@ -12,4 +12,7 @@ urlpatterns = [
 	path("en/login/", views.login_en, name="login_en"),
 	path("en/signup/", views.signup_en, name="signup_en"),
 	path("logout/", views.logout_user, name="logout"),
+	path("entrada/", views.landing_auto_language, name="landing_auto"),
+	path("pt/entrada/", views.landing_pt, name="landing_pt"),
+	path("en/entrada/", views.landing_en, name="landing_en"),
 ]

@@ -9,6 +9,7 @@
 	"ui_send_button": "Send",
 	"table_create": "Create table",
 	"table_join": "Join table",
+	"hub_disconnect": "Disconnect",
 	"hub_exit": "Exit",
 	"table_created": "Table created.",
 	"table_joined": "You joined {owner}'s table.",

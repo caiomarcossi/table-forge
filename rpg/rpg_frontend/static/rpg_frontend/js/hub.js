@@ -151,6 +151,15 @@ if(event.key==="End"){ event.preventDefault(); focusActionButton(buttons.length-
 }
 
 function handleAction(action){
+if(action.type==="hub.disconnect"){
+try{
+if(activeSocket && activeSocket.readyState===WebSocket.OPEN){
+activeSocket.close();
+}
+}catch(e){}
+window.location.href=action.landing_url;
+return;
+}
 if(action.type==="hub.exit"){
 try{
 if(activeSocket && activeSocket.readyState===WebSocket.OPEN){
@@ -260,6 +269,10 @@ function closeActiveSocket(callback){
 if(!activeSocket){ callback(); return; }
 const old=activeSocket;
 activeSocket=null;
+if(old.readyState===WebSocket.CLOSED){
+callback();
+return;
+}
 old.addEventListener("close",function(){ callback(); },{once:true});
 old.close();
 }

@@ -9,4 +9,4 @@ def sound_serve(request, sound_id):
 	path=get_sound_path(sound_id)
 	if not path.exists():
 		raise Http404
-	return FileResponse(open(path, "rb"), content_type="audio/mpeg")
+	return FileResponse(open(path, "rb"), content_type="audio/ogg")

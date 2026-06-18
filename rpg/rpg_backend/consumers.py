@@ -200,7 +200,7 @@ class HubConsumer(BaseJsonConsumer):
 		await self.join_personal_group()
 		await self.join_global_presence("hub")
 		await self.accept()
-		await self.send_json(get_hub_payload_for_language(self.language, reverse("logout")))
+		await self.send_json(get_hub_payload_for_language(self.language, reverse("logout"), reverse("landing_auto")))
 
 	async def disconnect(self, close_code):
 		if hasattr(self, "personal_group"):
@@ -228,7 +228,7 @@ class HubConsumer(BaseJsonConsumer):
 		if event=="hub.main":
 			await self.send_json({
 				"type": "hub.menu",
-				"actions": get_hub_actions_for_language(self.language, reverse("logout")),
+				"actions": get_hub_actions_for_language(self.language, reverse("logout"), reverse("landing_auto")),
 			})
 			return
 

@@ -8,9 +8,6 @@ def get_hub_language(user):
 def get_hub_texts_for_language(language):
 	return load_translations("hub", language)
 
-def get_hub_texts(user):
-	return get_hub_texts_for_language(get_hub_language(user))
-
 def get_hub_actions_for_language(language, logout_url, landing_url):
 	texts=get_hub_texts_for_language(language)
 	from .social import get_social_texts_for_language

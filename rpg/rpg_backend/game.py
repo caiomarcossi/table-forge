@@ -4,20 +4,27 @@ from django.core.cache import cache
 def _pk(token): return f"game:players:{token}"
 def _sk(token): return f"game:state:{token}"
 def _ck(token,user_id): return f"game:challenge:{token}:{user_id}"
+def _chk(token,user_id): return f"game:pchan:{token}:{user_id}"
 
-async def player_joined(token,user_id,username):
+async def player_joined(token,user_id,username,channel):
 	players=await cache.aget(_pk(token)) or {}
 	players[str(user_id)]=username
-	await cache.aset(_pk(token),players)
+	await cache.aset(_pk(token),players,timeout=None)
+	await cache.aset(_chk(token,user_id),channel,timeout=None)
 
-async def player_left(token,user_id):
+async def player_left(token,user_id,channel):
+	owner=await cache.aget(_chk(token,user_id))
+	if owner is not None and owner!=channel:
+		return False
 	players=await cache.aget(_pk(token)) or {}
 	players.pop(str(user_id),None)
 	if players:
-		await cache.aset(_pk(token),players)
+		await cache.aset(_pk(token),players,timeout=None)
 	else:
 		await cache.adelete(_pk(token))
 	await cache.adelete(_ck(token,user_id))
+	await cache.adelete(_chk(token,user_id))
+	return True
 
 async def get_players(token):
 	players=await cache.aget(_pk(token)) or {}
@@ -34,12 +41,8 @@ async def get_master_id(token):
 	state=await cache.aget(_sk(token))
 	return state["master_id"] if state else None
 
-async def get_master_username(token):
-	state=await cache.aget(_sk(token))
-	return state["master_username"] if state else None
-
 async def start_game(token,master_id,master_username):
-	await cache.aset(_sk(token),{"master_id":int(master_id),"master_username":master_username})
+	await cache.aset(_sk(token),{"master_id":int(master_id),"master_username":master_username},timeout=None)
 
 async def stop_game(token):
 	await cache.adelete(_sk(token))
@@ -52,10 +55,10 @@ async def set_master(token,master_id,master_username):
 	if state:
 		state["master_id"]=int(master_id)
 		state["master_username"]=master_username
-		await cache.aset(_sk(token),state)
+		await cache.aset(_sk(token),state,timeout=None)
 
 async def set_challenge(token,user_id,challenge):
-	await cache.aset(_ck(token,user_id),challenge)
+	await cache.aset(_ck(token,user_id),challenge,timeout=None)
 
 async def get_challenge(token,user_id):
 	return await cache.aget(_ck(token,user_id))

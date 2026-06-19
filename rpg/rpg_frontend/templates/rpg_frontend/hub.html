@@ -31,6 +31,12 @@ Table Forge
 <div id="actionsMenu" role="toolbar" aria-labelledby="actionsTitle" aria-orientation="horizontal"></div>
 </section>
 
+<form id="promptArea" hidden>
+<label id="promptLabel" for="promptBox"></label>
+<input type="text" id="promptBox" autocomplete="off">
+<button type="submit">{{ ui_send_button }}</button>
+</form>
+
 <form id="chatArea">
 <label for="chatBox">{{ ui_chat_label }}</label>
 <input type="text" id="chatBox" autocomplete="off">
@@ -40,5 +46,5 @@ Table Forge
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'rpg_frontend/js/hub.js' %}"></script>
+<script src="{% static 'rpg_frontend/js/hub.js' %}?v=20260618a"></script>
 {% endblock %}

@@ -57,6 +57,9 @@ const actionsMenu=document.getElementById("actionsMenu");
 const connectionStatus=document.getElementById("connectionStatus");
 const chatArea=document.getElementById("chatArea");
 const chatBox=document.getElementById("chatBox");
+const promptArea=document.getElementById("promptArea");
+const promptBox=document.getElementById("promptBox");
+const promptLabel=document.getElementById("promptLabel");
 
 let historyValue="";
 let inputMode=null;
@@ -89,9 +92,6 @@ historyElement.scrollTop=historyElement.scrollHeight;
 const p=document.createElement("p");
 p.textContent=message;
 historyAnnouncements.appendChild(p);
-while(historyAnnouncements.childElementCount>15){
-historyAnnouncements.removeChild(historyAnnouncements.firstChild);
-}
 }
 
 function restoreHistoryValue(){
@@ -103,7 +103,24 @@ historyElement.selectionStart=selectionStart;
 historyElement.selectionEnd=selectionEnd;
 }
 
-function renderActions(actions){
+function showPrompt(prompt,action){
+inputMode={action:action};
+promptLabel.textContent=prompt;
+promptArea.hidden=false;
+promptBox.value="";
+promptBox.focus();
+}
+
+function hidePrompt(){
+inputMode=null;
+promptArea.hidden=true;
+promptBox.value="";
+}
+
+function renderActions(actions,keepFocus){
+if(!keepFocus) hidePrompt();
+const previousButtons=getActionButtons();
+const previousIndex=previousButtons.indexOf(document.activeElement);
 actionsMenu.replaceChildren();
 actions.forEach(function(action,index){
 if(!action.type || !action.label) return;
@@ -116,7 +133,12 @@ button.addEventListener("keydown",handleActionKeydown);
 actionsMenu.appendChild(button);
 });
 const buttons=getActionButtons();
-if(buttons.length) buttons[0].focus();
+if(!buttons.length) return;
+if(keepFocus){
+if(previousIndex!==-1) focusActionButton(Math.min(previousIndex,buttons.length-1));
+}else{
+focusActionButton(0);
+}
 }
 
 function getActionButtons(){
@@ -193,13 +215,12 @@ return;
 }
 if(data.type==="hub.menu"){
 if(data.message) addHistory(data.message);
-renderActions(data.actions||[]);
+renderActions(data.actions||[],data.focus===false);
 return;
 }
 if(data.type==="hub.input"){
 addHistory(data.prompt);
-inputMode={action:data.action};
-chatBox.focus();
+showPrompt(data.prompt,data.action);
 return;
 }
 if(data.type==="player.connected"||data.type==="player.disconnected"){
@@ -279,7 +300,7 @@ old.close();
 
 function connectHub(){
 closeActiveSocket(function(){
-inputMode=null;
+hidePrompt();
 activeMode="hub";
 const socket=buildSocket("/ws/rpg/hub/");
 activeSocket=socket;
@@ -293,7 +314,7 @@ addHistory(activeMessages.connection_closed||"");
 
 function connectTable(tableToken){
 closeActiveSocket(function(){
-inputMode=null;
+hidePrompt();
 activeMode="table";
 const socket=buildSocket("/ws/rpg/table/"+tableToken+"/");
 activeSocket=socket;
@@ -312,12 +333,30 @@ historyElement.addEventListener("cut",function(e){ e.preventDefault(); });
 historyElement.addEventListener("drop",function(e){ e.preventDefault(); });
 historyElement.addEventListener("input",restoreHistoryValue);
 
-chatBox.addEventListener("keydown",function(event){
-if(event.key==="Escape" && inputMode){
-inputMode=null;
-chatBox.value="";
+promptBox.addEventListener("keydown",function(event){
+if(event.key==="Escape"){
+event.preventDefault();
+hidePrompt();
+sendCurrentActionsRequest();
 }
 });
+
+promptArea.addEventListener("submit",function(event){
+event.preventDefault();
+if(!inputMode) return;
+const value=promptBox.value.trim();
+if(!value) return;
+if(!activeSocket || activeSocket.readyState!==WebSocket.OPEN) return;
+const action=inputMode.action;
+hidePrompt();
+activeSocket.send(JSON.stringify({type:action,value:value}));
+});
+
+function sendCurrentActionsRequest(){
+if(!activeSocket || activeSocket.readyState!==WebSocket.OPEN) return;
+const type=activeMode==="table"?"game.wizard.cancel":"hub.main";
+activeSocket.send(JSON.stringify({type:type}));
+}
 
 chatArea.addEventListener("submit",function(event){
 event.preventDefault();
@@ -325,11 +364,6 @@ const message=chatBox.value.trim();
 chatBox.value="";
 if(!message) return;
 if(!activeSocket || activeSocket.readyState!==WebSocket.OPEN) return;
-if(inputMode){
-activeSocket.send(JSON.stringify({type:inputMode.action,value:message}));
-inputMode=null;
-return;
-}
 const type=activeMode==="table"?"chat.send":"hub.chat";
 activeSocket.send(JSON.stringify({type:type,message:message}));
 });

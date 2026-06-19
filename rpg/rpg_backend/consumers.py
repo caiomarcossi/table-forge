@@ -47,6 +47,14 @@ def parse_command(message, prefix):
 	rest=message[len(prefix)+1:].strip()
 	return rest or None
 
+_background_tasks=set()
+
+def spawn_background_task(coro):
+	task=asyncio.ensure_future(coro)
+	_background_tasks.add(task)
+	task.add_done_callback(_background_tasks.discard)
+	return task
+
 
 class BaseJsonConsumer(AsyncWebsocketConsumer):
 	async def send_json(self, data):
@@ -92,7 +100,7 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		friend_ids=await self.db_get_friend_ids()
 		channel_layer=self.channel_layer
 		leaving_key=f"user_leaving:{user_id}"
-		await django_cache.aset(leaving_key, True, timeout=3)
+		await django_cache.aset(leaving_key, True, timeout=10)
 		await presence.user_disconnected(user_id)
 
 		async def delayed_disconnect():
@@ -109,7 +117,7 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 						"sound": SOUND_PLAYER_DISCONNECTED,
 					})
 
-		asyncio.ensure_future(delayed_disconnect())
+		spawn_background_task(delayed_disconnect())
 
 	async def forward_json(self, event):
 		await self.send_json(event["data"])
@@ -163,6 +171,9 @@ class BaseJsonConsumer(AsyncWebsocketConsumer):
 		if recipient is None:
 			await self.send_json({"type": "hub.history", "message": texts["private_message_user_not_found"]})
 			return
+		if await presence.get_user_presence(recipient.id) is None:
+			await self.send_json({"type": "hub.history", "message": texts["private_message_user_offline"]})
+			return
 		await self.channel_layer.group_send(f"user_{recipient.id}", {
 			"type": "receive.private.message",
 			"from_username": self.user.username,
@@ -197,6 +208,7 @@ class HubConsumer(BaseJsonConsumer):
 			await self.close()
 			return
 		self.language=await get_consumer_language(self.user)
+		await presence.claim_connection(self.user.id, self.channel_name)
 		await self.join_personal_group()
 		await self.join_global_presence("hub")
 		await self.accept()
@@ -206,7 +218,9 @@ class HubConsumer(BaseJsonConsumer):
 		if hasattr(self, "personal_group"):
 			await self.leave_personal_group()
 		if hasattr(self, "user") and not self.user.is_anonymous:
-			await self.leave_global_presence()
+			if await presence.is_current_connection(self.user.id, self.channel_name):
+				await presence.release_connection(self.user.id, self.channel_name)
+				await self.leave_global_presence()
 
 	async def send_friends_menu(self):
 		count=await self.db_get_pending_requests_count()
@@ -457,10 +471,11 @@ class HubConsumer(BaseJsonConsumer):
 
 	@database_sync_to_async
 	def db_list_tables(self):
+		from django.db.models import Q
 		from .models import Table, TableInvite
 		public=list(Table.objects.filter(is_private=False).exclude(members=self.user).select_related("owner"))
 		invited_ids=TableInvite.objects.filter(invited_user=self.user).values_list("table_id", flat=True)
-		invited=list(Table.objects.filter(id__in=invited_ids, is_private=True).select_related("owner"))
+		invited=list(Table.objects.filter(is_private=True).filter(Q(id__in=invited_ids)|Q(owner=self.user)).exclude(members=self.user).select_related("owner"))
 		return public, invited
 
 	@database_sync_to_async
@@ -470,7 +485,7 @@ class HubConsumer(BaseJsonConsumer):
 			table=Table.objects.select_related("owner").get(token=table_token)
 		except (Table.DoesNotExist, ValueError, ValidationError):
 			return None, "not_found"
-		if table.is_private:
+		if table.is_private and table.owner_id!=self.user.id:
 			invite=TableInvite.objects.filter(table=table, invited_user=self.user).first()
 			if not invite:
 				return None, "private"
@@ -578,6 +593,7 @@ class TableConsumer(BaseJsonConsumer):
 		self.is_private=table.is_private
 		self.language=await get_consumer_language(self.user)
 		self.table_group=f"table_{self.table_token}"
+		await presence.claim_connection(self.user.id, self.channel_name)
 		texts=get_table_texts_for_language(self.language)
 		await self.channel_layer.group_send(self.table_group, {
 			"type": "forward_json",
@@ -593,7 +609,7 @@ class TableConsumer(BaseJsonConsumer):
 		await self.set_session_table_token(self.table_token)
 		await self.accept()
 		self.wizard=None
-		await game.player_joined(self.table_token,self.user.id,self.user.username)
+		await game.player_joined(self.table_token,self.user.id,self.user.username,self.channel_name)
 		payload=get_table_payload_for_language(
 			self.language, self.table_token, self.owner_username, self.is_private, reverse("rpg_home")
 		)
@@ -601,32 +617,37 @@ class TableConsumer(BaseJsonConsumer):
 		await self.send_json(payload)
 
 	async def disconnect(self, close_code):
+		not_anon=hasattr(self, "user") and not self.user.is_anonymous
 		if hasattr(self, "table_group"):
-			texts=get_table_texts_for_language(self.language)
-			if await game.is_in_progress(self.table_token) and await game.get_master_id(self.table_token)==self.user.id:
-				await game.stop_game(self.table_token)
-				await self.channel_layer.group_send(self.table_group,{
-					"type":"forward_json",
-					"data":{"type":"hub.history","message":texts["game_master_disconnected"]},
+			removed=await game.player_left(self.table_token,self.user.id,self.channel_name) if not_anon else False
+			if removed:
+				texts=get_table_texts_for_language(self.language)
+				if await game.is_in_progress(self.table_token) and await game.get_master_id(self.table_token)==self.user.id:
+					await game.stop_game(self.table_token)
+					await self.channel_layer.group_send(self.table_group,{
+						"type":"forward_json",
+						"data":{"type":"hub.history","message":texts["game_master_disconnected"]},
+					})
+					await self.channel_layer.group_send(self.table_group,{"type":"refresh_actions"})
+				if await game.get_player_count(self.table_token)==0:
+					await delete_table_by_token(self.table_token)
+				else:
+					await self.db_remove_membership()
+				await self.channel_layer.group_send(self.table_group, {
+					"type": "forward_json",
+					"data": {
+						"type": "player.left",
+						"username": self.user.username,
+						"message": texts["player_left"].format(username=self.user.username),
+						"sound": SOUND_TABLE_LEAVED,
+					},
 				})
-				await self.channel_layer.group_send(self.table_group,{"type":"refresh_actions"})
-			await game.player_left(self.table_token,self.user.id)
-			if await game.get_player_count(self.table_token)==0:
-				await delete_table_by_token(self.table_token)
-			await self.channel_layer.group_send(self.table_group, {
-				"type": "forward_json",
-				"data": {
-					"type": "player.left",
-					"username": self.user.username,
-					"message": texts["player_left"].format(username=self.user.username),
-					"sound": SOUND_TABLE_LEAVED,
-				},
-			})
+				await self.clear_session_table_token()
 			await self.channel_layer.group_discard(self.table_group, self.channel_name)
-			await self.clear_session_table_token()
 		if hasattr(self, "personal_group"):
 			await self.leave_personal_group()
-		if hasattr(self, "user") and not self.user.is_anonymous:
+		if not_anon and await presence.is_current_connection(self.user.id, self.channel_name):
+			await presence.release_connection(self.user.id, self.channel_name)
 			await self.leave_global_presence()
 
 	async def receive(self, text_data=None, bytes_data=None):
@@ -789,14 +810,14 @@ class TableConsumer(BaseJsonConsumer):
 			actions.append({"type":"table.invite","label":texts["table_invite_button"]})
 		return actions
 
-	async def send_current_actions(self):
-		await self.send_json({"type":"hub.menu","actions":await self.build_actions_list()})
+	async def send_current_actions(self,focus=True):
+		await self.send_json({"type":"hub.menu","actions":await self.build_actions_list(),"focus":focus})
 
 	async def broadcast_refresh_actions(self):
 		await self.channel_layer.group_send(self.table_group,{"type":"refresh_actions"})
 
 	async def refresh_actions(self,event):
-		await self.send_current_actions()
+		await self.send_current_actions(focus=False)
 
 	async def send_wizard_player_select(self,texts,prompt,exclude_self=False):
 		players=await game.get_players(self.table_token)
@@ -1029,7 +1050,9 @@ class TableConsumer(BaseJsonConsumer):
 			tails_count=challenge["results"].count("tails")
 			heads_n,heads_op=challenge["heads"]
 			tails_n,tails_op=challenge["tails"]
-			success=game.check_coin_count(heads_count,heads_op,heads_n) and game.check_coin_count(tails_count,tails_op,tails_n)
+			heads_ok=(heads_op=="exact" and heads_n==0) or game.check_coin_count(heads_count,heads_op,heads_n)
+			tails_ok=(tails_op=="exact" and tails_n==0) or game.check_coin_count(tails_count,tails_op,tails_n)
+			success=heads_ok and tails_ok
 			result_msg=texts["game_coin_success"] if success else texts["game_coin_failure"]
 			await self.channel_layer.group_send(self.table_group,{
 				"type":"forward_json","data":{"type":"hub.history","message":result_msg},
@@ -1037,7 +1060,7 @@ class TableConsumer(BaseJsonConsumer):
 			await game.clear_challenge(self.table_token,self.user.id)
 			await self.broadcast_refresh_actions()
 		else:
-			await self.send_current_actions()
+			await self.send_current_actions(focus=False)
 
 	def build_coin_cond_phrase(self,texts,n,op,side_key):
 		side=texts[side_key]
@@ -1080,6 +1103,13 @@ class TableConsumer(BaseJsonConsumer):
 			return None
 
 	@database_sync_to_async
+	def db_remove_membership(self):
+		from .models import Table
+		table=Table.objects.filter(token=self.table_token).first()
+		if table:
+			table.members.remove(self.user)
+
+	@database_sync_to_async
 	def db_invite_user(self, username):
 		from .models import Table, TableInvite
 		User=get_user_model()
@@ -1087,6 +1117,9 @@ class TableConsumer(BaseJsonConsumer):
 			recipient=User.objects.get(username=username)
 		except User.DoesNotExist:
 			return None, "not_found"
-		table=Table.objects.get(token=self.table_token)
+		try:
+			table=Table.objects.get(token=self.table_token)
+		except Table.DoesNotExist:
+			return None, "not_found"
 		TableInvite.objects.get_or_create(table=table, invited_user=recipient)
 		return recipient, None

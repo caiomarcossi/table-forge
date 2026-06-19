@@ -1,6 +1,5 @@
 from django.conf import settings
 
-SOUND_CONNECTION="connected"
 SOUND_DICE_ROLL="dice_roll"
 SOUND_CHAT_MESSAGE="chat"
 SOUND_PRIVATE_MESSAGE="private_message"
@@ -13,7 +12,6 @@ SOUND_PLAYER_DISCONNECTED="player_offline"
 SOUND_COIN_FLIP="coin_flip"
 
 VALID_SOUNDS={
-	SOUND_CONNECTION,
 	SOUND_DICE_ROLL,
 	SOUND_CHAT_MESSAGE,
 	SOUND_PRIVATE_MESSAGE,

@@ -22,6 +22,7 @@
 	"private_message_sent": "→ {username}: {message}",
 	"private_message_from": "← {username}: {message}",
 	"private_message_user_not_found": "User not found.",
+	"private_message_user_offline": "That user is offline.",
 	"private_message_format": "Use: @<user> <message>",
 	"private_no_target": "You haven't sent a private message to anyone yet. Use @<user> <message>.",
 	"private_no_sender": "Nobody has sent you a private message yet. Use @<user> <message>.",

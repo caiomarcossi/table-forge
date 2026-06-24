@@ -3,7 +3,10 @@
 {% block html_lang %}en-US{% endblock %}
 {% block title %}Log in{% endblock %}
 {% block meta_description %}Table Forge Login Page{% endblock %}
+{% block section_class %}page-shell{% endblock %}
+
 {% block content %}
+<div class="card auth-card">
 <h1>
 Login to Table Forge
 </h1>
@@ -20,7 +23,7 @@ Invalid username or password.
 {% endfor %}
 <form method="post">
 {% csrf_token %}
-<p>
+<p class="field">
 <label for="id_username">
 Username
 </label>
@@ -32,7 +35,7 @@ autocomplete="username"
 value="{{ form.username.value|default_if_none:'' }}"
 required>
 </p>
-<p>
+<p class="field">
 <label for="id_password">
 Password
 </label>
@@ -43,14 +46,12 @@ name="password"
 autocomplete="current-password"
 required>
 </p>
-<p>
-<button type="submit">
+<button type="submit" class="btn">
 Sign in
 </button>
-</p>
 </form>
 
-<section aria-labelledby="signupTitle">
+<section aria-labelledby="signupTitle" class="auth-footer">
 <h2 id="signupTitle">
 New here?
 </h2>
@@ -61,11 +62,10 @@ Create your account
 </p>
 </section>
 
-<nav aria-label="language">
-<p>
+<nav aria-label="language" class="lang-switch">
 <a href="{% url 'login_pt' %}">
 Portuguese
 </a>
-</p>
 </nav>
+</div>
 {% endblock %}

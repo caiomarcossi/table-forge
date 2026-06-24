@@ -3,37 +3,34 @@
 {% block html_lang %}en-US{% endblock %}
 {% block title %}Welcome{% endblock %}
 {% block meta_description %}Online tabletop RPG platform{% endblock %}
+{% block section_class %}page-shell{% endblock %}
 
 {% block content %}
+<div class="card landing-card">
+<p class="brand">Online tabletop RPG</p>
 <h1>
 Table Forge
 </h1>
-<p>
-Table Forge is an online tabletop RPG platform.
+<p class="tagline">
 Create tables, invite friends, and experience your adventures in real time.
 </p>
 
 {% if authenticated %}
-<p>
-<a href="{% url 'rpg_home' %}">Play</a>
-</p>
+<a href="{% url 'rpg_home' %}" class="btn">Play</a>
 {% else %}
 <section aria-labelledby="accessTitle">
-<h2 id="accessTitle">
+<h2 id="accessTitle" class="access-title">
 Access your account
 </h2>
-<p>
-<a href="{% url 'login_en' %}">Sign in</a>
-</p>
-<p>
-<a href="{% url 'signup_en' %}">Create account</a>
-</p>
+<div class="cta-group">
+<a href="{% url 'login_en' %}" class="btn">Sign in</a>
+<a href="{% url 'signup_en' %}" class="btn btn-ghost">Create account</a>
+</div>
 </section>
 {% endif %}
 
-<nav aria-label="language">
-<p>
+<nav aria-label="language" class="lang-switch">
 <a href="{% url 'landing_pt' %}">Português</a>
-</p>
 </nav>
+</div>
 {% endblock %}

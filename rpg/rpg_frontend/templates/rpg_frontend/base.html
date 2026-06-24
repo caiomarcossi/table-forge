@@ -10,9 +10,9 @@
 <title>Table Forge - {% block title %}Acesso{% endblock %}</title>
 {% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 <main>
-<section>
+<section class="{% block section_class %}{% endblock %}">
 {% block content %}{% endblock %}
 </section>
 </main>

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "table-forge",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "runserver.bat"],
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

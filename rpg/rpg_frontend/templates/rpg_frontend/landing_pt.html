@@ -2,37 +2,34 @@
 
 {% block title %}Bem-vindo{% endblock %}
 {% block meta_description %}Plataforma de RPG de mesa online{% endblock %}
+{% block section_class %}page-shell{% endblock %}
 
 {% block content %}
+<div class="card landing-card">
+<p class="brand">RPG de mesa online</p>
 <h1>
 Table Forge
 </h1>
-<p>
-Table Forge é uma plataforma de RPG de mesa online.
+<p class="tagline">
 Crie mesas, convide amigos e viva suas aventuras em tempo real.
 </p>
 
 {% if authenticated %}
-<p>
-<a href="{% url 'rpg_home' %}">Jogar</a>
-</p>
+<a href="{% url 'rpg_home' %}" class="btn">Jogar</a>
 {% else %}
 <section aria-labelledby="accessTitle">
-<h2 id="accessTitle">
+<h2 id="accessTitle" class="access-title">
 Acesse sua conta
 </h2>
-<p>
-<a href="{% url 'login_pt' %}">Entrar</a>
-</p>
-<p>
-<a href="{% url 'signup_pt' %}">Criar conta</a>
-</p>
+<div class="cta-group">
+<a href="{% url 'login_pt' %}" class="btn">Entrar</a>
+<a href="{% url 'signup_pt' %}" class="btn btn-ghost">Criar conta</a>
+</div>
 </section>
 {% endif %}
 
-<nav aria-label="idioma">
-<p>
+<nav aria-label="idioma" class="lang-switch">
 <a href="{% url 'landing_en' %}">English</a>
-</p>
 </nav>
+</div>
 {% endblock %}

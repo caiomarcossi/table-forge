@@ -2,13 +2,16 @@
 
 {% block title %}Criação de conta{% endblock %}
 {% block meta_description %}Crie sua conta no Table Forge{% endblock %}
+{% block section_class %}page-shell{% endblock %}
+
 {% block content %}
+<div class="card auth-card">
 <h1>
 Crie sua conta no Table Forge
 </h1>
 <form method="post">
 {% csrf_token %}
-<p>
+<p class="field">
 <label for="id_username">
 Nome de usuário
 </label>
@@ -25,7 +28,7 @@ Este nome de usuário já está em uso.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_email">
 Endereço de e-mail
 </label>
@@ -42,7 +45,7 @@ Este endereço de e-mail já está em uso.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_password">
 Senha
 </label>
@@ -75,7 +78,7 @@ A senha precisa ter pelo menos um símbolo especial.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_password_confirm">
 Confirmação da senha
 </label>
@@ -92,13 +95,12 @@ As senhas não coincidem.
 </p>
 {% endif %}
 {% endfor %}
-<p>
-<button type="submit">
+<button type="submit" class="btn">
 Criar conta
 </button>
-</p>
 </form>
 
+<div class="auth-footer">
 <h2>
 Já tem uma conta?
 </h2>
@@ -107,12 +109,12 @@ Já tem uma conta?
 Faça login
 </a>
 </p>
+</div>
 
-<nav aria-label="idioma">
-<p>
+<nav aria-label="idioma" class="lang-switch">
 <a href="{% url 'signup_en' %}">
 English
 </a>
-</p>
 </nav>
+</div>
 {% endblock %}

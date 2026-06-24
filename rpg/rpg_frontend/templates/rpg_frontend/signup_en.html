@@ -3,13 +3,16 @@
 {% block html_lang %}en-US{% endblock %}
 {% block title %}Account creation{% endblock %}
 {% block meta_description %}Create your Table Forge account{% endblock %}
+{% block section_class %}page-shell{% endblock %}
+
 {% block content %}
+<div class="card auth-card">
 <h1>
 Create your Table Forge account
 </h1>
 <form method="post">
 {% csrf_token %}
-<p>
+<p class="field">
 <label for="id_username">
 Username
 </label>
@@ -26,7 +29,7 @@ This username is already in use.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_email">
 Email address
 </label>
@@ -43,7 +46,7 @@ This email address is already in use.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_password">
 Password
 </label>
@@ -76,7 +79,7 @@ The password must have at least one special character.
 </p>
 {% endif %}
 {% endfor %}
-<p>
+<p class="field">
 <label for="id_password_confirm">
 Confirm your password
 </label>
@@ -93,13 +96,12 @@ Passwords do not match.
 </p>
 {% endif %}
 {% endfor %}
-<p>
-<button type="submit">
+<button type="submit" class="btn">
 Create account
 </button>
-</p>
 </form>
 
+<div class="auth-footer">
 <h2>
 Already have an account?
 </h2>
@@ -108,12 +110,12 @@ Already have an account?
 Log in
 </a>
 </p>
+</div>
 
-<nav aria-label="Language">
-<p>
+<nav aria-label="Language" class="lang-switch">
 <a href="{% url 'signup_pt' %}">
 Portuguese
 </a>
-</p>
 </nav>
+</div>
 {% endblock %}

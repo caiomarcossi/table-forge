@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════════════════ */
 :root {
     --bg: #0f172a;
     --surface: rgba(15, 23, 42, 0.82);
@@ -10,7 +13,7 @@
     --radius: 18px;
 }
 
-* {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -29,6 +32,29 @@ body {
     line-height: 1.5;
 }
 
+/* ═══════════════════════════════════════════════════════
+   LINKS
+═══════════════════════════════════════════════════════ */
+a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CENTERING SHELL (auth / landing)
+═══════════════════════════════════════════════════════ */
 .page-shell {
     min-height: 100vh;
     display: grid;
@@ -36,6 +62,9 @@ body {
     padding: 24px;
 }
 
+/* ═══════════════════════════════════════════════════════
+   CARD
+═══════════════════════════════════════════════════════ */
 .card {
     width: min(100%, 440px);
     background: var(--surface);
@@ -45,10 +74,9 @@ body {
     backdrop-filter: blur(14px);
 }
 
-.auth-card {
-    padding: 32px;
-}
-
+/* ═══════════════════════════════════════════════════════
+   TYPOGRAPHY
+═══════════════════════════════════════════════════════ */
 .brand {
     font-size: 0.78rem;
     letter-spacing: 0.28em;
@@ -63,6 +91,14 @@ h1 {
     margin-bottom: 1.25rem;
 }
 
+.muted {
+    font-size: 0.96rem;
+    color: var(--muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════════════════ */
 .field {
     margin-bottom: 1rem;
 }
@@ -82,6 +118,7 @@ textarea {
     color: var(--text);
     padding: 0.85rem 0.95rem;
     font: inherit;
+    transition: border-color 0.15s;
 }
 
 textarea {
@@ -95,8 +132,16 @@ input:focus,
 textarea:focus {
     outline: 2px solid rgba(245, 158, 11, 0.45);
     outline-offset: 2px;
+    border-color: transparent;
 }
 
+input::placeholder {
+    color: rgba(203, 213, 225, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -104,25 +149,53 @@ textarea:focus {
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.9rem 1rem;
-    border: 0;
+    border: 1.5px solid transparent;
     border-radius: 999px;
     background: linear-gradient(135deg, var(--accent), #fb7185);
     color: #0f172a;
+    font: inherit;
     font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .btn:hover {
     background: linear-gradient(135deg, var(--accent-hover), #f472b6);
+    color: #0f172a;
+    text-decoration: none;
 }
 
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.btn-ghost {
+    background: transparent;
+    border-color: rgba(148, 163, 184, 0.4);
+    color: var(--muted);
+}
+
+.btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(245, 158, 11, 0.08);
+    text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
 .error {
     color: var(--error);
     font-weight: 600;
-}
-
-.muted {
-    font-size: 0.96rem;
 }
 
 .help {
@@ -143,12 +216,396 @@ textarea:focus {
     border: 0;
 }
 
-@media (max-width: 480px) {
+/* ═══════════════════════════════════════════════════════
+   LANDING PAGE
+═══════════════════════════════════════════════════════ */
+.landing-card {
+    padding: 44px 36px;
+    text-align: center;
+    width: min(100%, 480px);
+}
+
+.landing-card h1 {
+    font-size: 3.2rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent) 20%, #fb7185 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.tagline {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.access-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.85rem;
+}
+
+.cta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.cta-group .btn {
+    margin-top: 0;
+}
+
+.lang-switch {
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+.lang-switch a {
+    color: var(--muted);
+}
+
+.lang-switch a:hover {
+    color: var(--text);
+    text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUTH PAGES (login / signup)
+═══════════════════════════════════════════════════════ */
+.auth-card {
+    padding: 36px 32px;
+}
+
+.auth-card h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.auth-card [role="alert"] {
+    color: var(--error);
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.auth-card form .field {
+    margin-bottom: 1rem;
+}
+
+.auth-card form .btn {
+    margin-top: 1.25rem;
+}
+
+.auth-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--surface-border);
+}
+
+.auth-footer h2 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HUB PAGE
+═══════════════════════════════════════════════════════ */
+.hub-page {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at top left, rgba(245, 158, 11, 0.07), transparent 40%),
+        #070d1a;
+}
+
+.hub-page main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.hub-shell {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+#app {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px 16px;
+    gap: 10px;
+}
+
+/* — Connection status — */
+#gameArea {
+    flex-shrink: 0;
+}
+
+#gameArea h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+#connectionStatus {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--surface-border);
+}
+
+/* — History — */
+#historyArea {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#historyArea h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+#history {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    resize: none;
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: rgba(5, 10, 22, 0.75);
+    color: #94a3b8;
+    padding: 12px 14px;
+    font-family: "Cascadia Code", "Fira Code", "Consolas", "Courier New", monospace;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    overflow-y: auto;
+    min-height: unset;
+}
+
+#history:focus {
+    outline: 2px solid rgba(245, 158, 11, 0.25);
+    outline-offset: 1px;
+    border-color: transparent;
+}
+
+/* — Actions — */
+#actionsArea {
+    flex-shrink: 0;
+}
+
+#actionsArea h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+#actionsMenu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#actionsMenu:empty {
+    display: none;
+}
+
+#actionsMenu button {
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    backdrop-filter: blur(8px);
+}
+
+#actionsMenu button:hover {
+    border-color: var(--accent);
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--accent);
+}
+
+#actionsMenu button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+#actionsMenu button:active {
+    transform: scale(0.97);
+}
+
+/* — Prompt input — */
+#promptArea {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#promptArea label {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+    margin-bottom: 0;
+}
+
+#promptArea input {
+    flex: 1;
+    min-width: 0;
+    min-height: unset;
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
+}
+
+#promptArea button {
+    flex-shrink: 0;
+    padding: 0.55rem 1.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), #fb7185);
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+#promptArea button:hover {
+    background: linear-gradient(135deg, var(--accent-hover), #f472b6);
+}
+
+/* — Chat input — */
+#chatArea {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--surface-border);
+}
+
+#chatArea label {
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+#chatArea input {
+    flex: 1;
+    min-width: 0;
+    min-height: unset;
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
+}
+
+#chatArea button {
+    flex-shrink: 0;
+    padding: 0.55rem 1.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), #fb7185);
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+#chatArea button:hover {
+    background: linear-gradient(135deg, var(--accent-hover), #f472b6);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
     .auth-card {
-        padding: 24px;
+        padding: 28px 20px;
     }
 
     h1 {
         font-size: 1.7rem;
+    }
+
+    .auth-card h1 {
+        font-size: 1.55rem;
+    }
+
+    .landing-card {
+        padding: 32px 20px;
+    }
+
+    .landing-card h1 {
+        font-size: 2.4rem;
+    }
+
+    #app {
+        padding: 8px 10px 12px;
+        gap: 8px;
+    }
+
+    #actionsMenu button {
+        font-size: 0.83rem;
+        padding: 0.45rem 0.9rem;
+    }
+
+    #promptArea {
+        flex-wrap: wrap;
+    }
+
+    #promptArea label {
+        width: 100%;
+        margin-bottom: 2px;
     }
 }
